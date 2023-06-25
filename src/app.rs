@@ -28,15 +28,36 @@ pub fn App(cx: Scope) -> impl IntoView {
     }
 }
 
-/// Renders the home page of your application.
 #[component]
 fn HomePage(cx: Scope) -> impl IntoView {
-    // Creates a reactive value to update the button
-    let (count, set_count) = create_signal(cx, 0);
-    let on_click = move |_| set_count.update(|count| *count += 1);
+    let always_errors = create_server_action::<AlwaysErrors>(cx);
+    let error = create_rw_signal(cx, None);
 
     view! { cx,
-        <h1>"Welcome to Leptos!"</h1>
-        <button on:click=on_click>"Click Me: " {count}</button>
+            <ActionForm action=always_errors error=error>
+                <button type="submit">
+                    "Click Me To Trigger Server-Side Error"
+                </button>
+            </ActionForm>
+            {move || {
+                error
+                    .with(|e| {
+                        if let Some(err) = e {
+                            view! { cx, <p>{format!("ERROR: {err}")}</p> }
+                                .into_view(cx)
+                        } else {
+                            view! { cx, <div></div> }
+                                .into_view(cx)
+                        }
+                    })
+            }}
     }
+
 }
+
+#[server(AlwaysErrors, "/api")]
+pub async fn always_errors(cx: Scope) -> Result<(),ServerFnError> {
+    Err(ServerFnError::ServerError("I will always error".to_string()))
+
+}
+

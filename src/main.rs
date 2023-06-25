@@ -19,6 +19,7 @@ async fn main() {
     let leptos_options = conf.leptos_options;
     let addr = leptos_options.site_addr;
     let routes = generate_route_list(|cx| view! { cx, <App/> }).await;
+    _ = AlwaysErrors::register();
 
     // build our application with a route
     let app = Router::new()
